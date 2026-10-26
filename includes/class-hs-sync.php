@@ -379,7 +379,7 @@ class HS_Sync {
 		global $wpdb;
 		$map_user = array();
 		$map_post = array();
-		$cpt      = array( 'comptes_crees' => 0, 'comptes_relies' => 0, 'photos' => 0, 'photos_existantes' => 0, 'crees' => 0, 'maj' => 0, 'supprimees' => 0 );
+		$cpt      = array( 'comptes_crees' => 0, 'comptes_relies' => 0, 'photos' => 0, 'photos_existantes' => 0, 'crees' => 0, 'maj' => 0, 'reprises' => 0, 'supprimees' => 0 );
 
 		// 1. Comptes : retrouvés par email, sinon créés (mot de passe aléatoire, aucun email envoyé).
 		foreach ( (array) $data['comptes'] as $c ) {
@@ -469,6 +469,14 @@ class HS_Sync {
 			}
 			$uids[ $p['uid'] ] = true;
 			$existe = self::par_uid( $p['uid'], $p['type'] );
+			if ( ! $existe && $p['slug'] ) {
+				// Premier import : une fiche de ce site sans identifiant, de même type et même slug, est la même fiche.
+				$existe = self::par_slug( $p['slug'], $p['type'] );
+				if ( $existe ) {
+					update_post_meta( $existe, '_hs_uid', $p['uid'] );
+					$cpt['reprises']++;
+				}
+			}
 			$champs = array(
 				'post_type'    => $p['type'],
 				'post_title'   => wp_slash( $p['titre'] ),
@@ -601,13 +609,27 @@ class HS_Sync {
 		}
 
 		$lignes = array(
-			sprintf( 'Fiches : %d créées, %d mises à jour%s.', $cpt['crees'], $cpt['maj'], $cpt['supprimees'] ? sprintf( ', %d mises à la corbeille', $cpt['supprimees'] ) : '' ),
+			sprintf( 'Fiches : %d créées, %d mises à jour%s%s.', $cpt['crees'], $cpt['maj'], $cpt['reprises'] ? sprintf( ' (dont %d fiches déjà présentes ici, reconnues par leur adresse)', $cpt['reprises'] ) : '', $cpt['supprimees'] ? sprintf( ', %d mises à la corbeille', $cpt['supprimees'] ) : '' ),
 			sprintf( 'Photos : %d ajoutées à la médiathèque, %d déjà présentes.', $cpt['photos'], $cpt['photos_existantes'] ),
 			sprintf( 'Comptes : %d créés, %d déjà présents (reliés par email). Les comptes créés doivent choisir leur mot de passe (« Mot de passe oublié » sur /mon-espace/).', $cpt['comptes_crees'], $cpt['comptes_relies'] ),
 			$options['tables'] ? 'Tables remplacées : ' . implode( ', ', $lignes_tables ) . '.' : 'Tables financières non modifiées.',
 			$options['reglages'] ? 'Réglages importés : vérifiez les numéros et l\'email de contact.' : 'Réglages de ce site conservés.',
 		);
 		return $lignes;
+	}
+
+	/** Fiche de ce site de même type et même slug, jamais synchronisée (sans _hs_uid). */
+	private static function par_slug( $slug, $type ) {
+		$p = get_posts( array(
+			'post_type'      => $type,
+			'post_status'    => array( 'publish', 'draft', 'pending', 'private', 'future' ),
+			'name'           => $slug,
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'meta_query'     => array( array( 'key' => '_hs_uid', 'compare' => 'NOT EXISTS' ) ), // phpcs:ignore WordPress.DB.SlowDBQuery
+		) );
+		return $p ? (int) $p[0] : 0;
 	}
 
 	/** Fiche ou image de ce site portant cet identifiant unique. */

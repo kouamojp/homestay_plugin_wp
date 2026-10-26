@@ -6,7 +6,7 @@ Plugin métier de la plateforme **HomyStay Capital** : biens immobiliers, réser
 
 | | |
 | --- | --- |
-| Version | 0.6.0 |
+| Version | 0.6.1 |
 | WordPress | 6.4 minimum (développé sur 7.0) |
 | PHP | 7.4 minimum |
 | Dépendances | Aucune (ACF, Elementor et WooCommerce sont optionnels) |
@@ -677,6 +677,7 @@ Non copiés : le contenu Elementor d'une fiche de bien (méta `_elementor_*`), l
 ### Comment les liens sont préservés
 
 - Chaque fiche et chaque photo reçoit au premier export un identifiant unique (méta `_hs_uid`, UUID). À l'import, une fiche portant le même identifiant est **mise à jour**, sinon elle est **créée** : réimporter ne crée jamais de doublon.
+- Premier import sur un site qui a déjà des fiches HomyStay : une fiche **sans identifiant**, de même type et de même slug (ex. `villa-contemporaine-a-makepe`), est reprise et mise à jour au lieu d'être dupliquée (0.6.1).
 - Les numéros changent d'un site à l'autre. L'import les recâble partout : champs de type relation (`hs_bien_id`, `hs_proprietaire_id`…), `_thumbnail_id`, `hs_galerie`, comptes (`hs_user_id`, `hs_technicien_id`), colonnes des tables (`bien_id`, `contrat_id`, `projet_id`, `proprietaire_id`, `investisseur_id`, `user_id`, `created_by`), `ecriture_id` des échéances et `investissement_id` des dividendes.
 - Comptes : retrouvés **par email** ; sinon créés avec leurs rôles HomyStay et un mot de passe aléatoire, sans email envoyé. Le client choisit son mot de passe avec « Mot de passe oublié » sur `/mon-espace/`. Un rôle administrateur n'est jamais transmis.
 - Un lien vers une fiche absente du fichier (par exemple un bien de test non exporté) devient 0. Les lignes de tables qui renvoient à une fiche non exportée sont écartées à l'export.

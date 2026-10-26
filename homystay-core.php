@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       HomyStay Core
  * Description:       Logique métier HomyStay Capital : biens, propriétaires, locataires, contrats, maintenance, assurance, investissement, finances et shortcodes front.
- * Version:           0.6.0
+ * Version:           0.6.1
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            MINDCODE 237
@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'HS_VERSION', '0.6.0' );
+define( 'HS_VERSION', '0.6.1' );
 define( 'HS_DB_VERSION', '5' );
 define( 'HS_FILE', __FILE__ );
 define( 'HS_PATH', plugin_dir_path( __FILE__ ) );
