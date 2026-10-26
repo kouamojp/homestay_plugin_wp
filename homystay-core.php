@@ -30,6 +30,7 @@ require_once HS_PATH . 'includes/class-hs-donnees.php';
 require_once HS_PATH . 'includes/class-hs-tableau.php';
 require_once HS_PATH . 'includes/class-hs-espace.php';
 require_once HS_PATH . 'includes/class-hs-reservation.php';
+require_once HS_PATH . 'includes/class-hs-sync.php';
 require_once HS_PATH . 'includes/class-hs-demo-tableaux.php';
 require_once HS_PATH . 'includes/class-hs-demo.php';
 
@@ -46,6 +47,7 @@ add_action( 'plugins_loaded', function () {
 	HS_Tableau::init();
 	HS_Espace::init();
 	HS_Reservation::init();
+	HS_Sync::init();
 	HS_Demo::init();
 } );
 

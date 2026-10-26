@@ -28,6 +28,7 @@ Plugin métier de la plateforme **HomyStay Capital** : biens immobiliers, réser
 9 bis. [Page d'un bien](#9-bis-page-dun-bien)
 9 ter. [Tableaux de bord et espaces clients](#9-ter-tableaux-de-bord-et-espaces-clients)
 9 quater. [Réservation en ligne](#9-quater-réservation-en-ligne)
+9 quinquies. [Synchronisation entre sites](#9-quinquies-synchronisation-entre-sites)
 10. [Intégration Elementor](#10-intégration-elementor)
 11. [Personnaliser l'affichage](#11-personnaliser-laffichage)
 12. [Filtres et hooks](#12-filtres-et-hooks)
@@ -111,6 +112,7 @@ homystay-core/
 │   ├── class-hs-tableau.php       Tableau de bord du back-office, export CSV, reversements
 │   ├── class-hs-espace.php        « Mon espace » : espaces clients, aperçu, documents, actions
 │   ├── class-hs-reservation.php   Réservation en ligne : disponibilités, prix, paiement Mobile Money, confirmation, compte voyageur
+│   ├── class-hs-sync.php          Synchronisation entre sites : export .zip, import avec recâblage des numéros
 │   ├── class-hs-demo.php          Outil « Données de test »
 │   ├── class-hs-demo-tableaux.php Données de test des tableaux de bord
 │   └── class-hs-settings.php      Réglages (WhatsApp, téléphone, email…)
@@ -649,6 +651,52 @@ Cela enregistre le revenu, confirme la réservation, crée le compte et envoie l
 
 ---
 
+## 9 quinquies. Synchronisation entre sites
+
+**HomyStay Capital › Synchronisation** (administrateurs) copie **uniquement les données HomyStay** d'un site à un autre, par exemple du site local vers le staging. Les pages, Elementor, le thème, les autres extensions et les comptes administrateurs ne sont pas touchés.
+
+### Ce qui est copié
+
+| Données | Détail |
+| --- | --- |
+| Fiches | Tous les types `hs_*` (publiés, brouillons, en attente, privés, planifiés) avec leurs champs `hs_…` et l'image mise en avant |
+| Photos | Image mise en avant et galerie de chaque fiche (case « Inclure les photos ») |
+| Comptes | Comptes ayant un rôle HomyStay, et comptes auxquels une fiche ou une ligne renvoie. **Sans mot de passe** |
+| Tables | `wp_hs_ecritures`, `wp_hs_echeances`, `wp_hs_investissements`, `wp_hs_distributions` |
+| Réglages | Option `hs_reglages`, importée seulement si la case est cochée à l'import |
+
+Non copiés : le contenu Elementor d'une fiche de bien (méta `_elementor_*`), les images insérées dans le texte de la description, les pages du site.
+
+### Mode d'emploi (local → staging)
+
+1. Les deux sites ont la **même version du plugin** (l'import refuse sinon : `HS_DB_VERSION` différent).
+2. Site local : **Exporter** → un fichier `homystay-sync-<site>-<date>.zip`. Cocher « Inclure les données de test » pour emporter aussi les biens de démonstration.
+3. Staging : **sauvegarde de la base**, puis **Importer** ce fichier.
+4. Lire le compte rendu : fiches créées / mises à jour, photos, comptes, lignes de tables.
+
+### Comment les liens sont préservés
+
+- Chaque fiche et chaque photo reçoit au premier export un identifiant unique (méta `_hs_uid`, UUID). À l'import, une fiche portant le même identifiant est **mise à jour**, sinon elle est **créée** : réimporter ne crée jamais de doublon.
+- Les numéros changent d'un site à l'autre. L'import les recâble partout : champs de type relation (`hs_bien_id`, `hs_proprietaire_id`…), `_thumbnail_id`, `hs_galerie`, comptes (`hs_user_id`, `hs_technicien_id`), colonnes des tables (`bien_id`, `contrat_id`, `projet_id`, `proprietaire_id`, `investisseur_id`, `user_id`, `created_by`), `ecriture_id` des échéances et `investissement_id` des dividendes.
+- Comptes : retrouvés **par email** ; sinon créés avec leurs rôles HomyStay et un mot de passe aléatoire, sans email envoyé. Le client choisit son mot de passe avec « Mot de passe oublié » sur `/mon-espace/`. Un rôle administrateur n'est jamais transmis.
+- Un lien vers une fiche absente du fichier (par exemple un bien de test non exporté) devient 0. Les lignes de tables qui renvoient à une fiche non exportée sont écartées à l'export.
+
+### Options d'import
+
+| Option | Défaut | Effet |
+| --- | --- | --- |
+| Remplacer les tables financières | coché | Vide les 4 tables du site puis insère celles du fichier. Les numéros de lignes changent ; les lignes de test restent reconnues par « Supprimer les données de test » |
+| Importer aussi les réglages | décoché | Remplace les réglages du site (WhatsApp, numéros Mobile Money, email…) |
+| Supprimer les fiches absentes | décoché | Met à la corbeille les fiches **déjà importées** (avec `_hs_uid`) qui ne sont plus dans le fichier. Les fiches créées directement sur le site ne sont jamais touchées |
+
+### Limites
+
+- **Sens unique** : le site qui exporte fait référence. Une fiche modifiée des deux côtés garde la version du fichier ; avec « Remplacer les tables », les écritures saisies sur le site d'arrivée sont perdues.
+- Taille : l'archive passe par un envoi de fichier ; la taille maximale du serveur d'arrivée (`upload_max_filesize`, `post_max_size`) est affichée sur l'écran. Au-delà, exporter sans les photos.
+- Extension PHP `zip` requise des deux côtés.
+
+---
+
 ## 10. Intégration Elementor
 
 ### Placer un shortcode
@@ -894,6 +942,7 @@ Options d'un champ : `label`, `type`, `options` (listes), `default`, `step` (`'a
 | Refonte page d'un bien | Plaque, mosaïque, lightbox, polices, mobile | Fait (0.4.0) |
 | Tableaux de bord | Vues Gestion, Finances, Commercial ; espaces propriétaire, locataire, voyageur, investisseur, technicien ; réservations, CRM, investisseurs | Fait (0.5.0) |
 | Réservations en ligne | Calendrier public, blocage des dates, réservation depuis le site, paiement Orange Money / MTN MoMo déclaré et vérifié par l'équipe, compte voyageur automatique | Fait (0.6.0) |
+| Synchronisation entre sites | Export / import des données HomyStay (local → staging) avec recâblage des numéros | Fait (0.6.0) |
 | Synchro des calendriers | iCal Airbnb / Booking (import et export) | À faire |
 | Saisie financière | Encaissements et dépenses depuis l'admin, appel de loyer mensuel automatique, relances automatiques | À faire |
 | Paiement automatique | Passerelle (CinetPay, NotchPay, Campay) branchée sur `homystay_paiement_recu`, carte bancaire, loyers | À faire |
@@ -934,6 +983,9 @@ Options d'un champ : `label`, `type`, `options` (listes), `default`, `step` (`'a
 | La page de paiement dit « Nous vous contactons » | Aucun numéro Orange Money ni MTN MoMo | Les renseigner dans les Réglages |
 | Le voyageur ne reçoit ni lien de paiement ni confirmation | Emails WordPress non envoyés (WAMP local, hébergement sans SMTP) | Extension SMTP ; en attendant, bouton « Écrire au voyageur sur WhatsApp » de la réservation |
 | Des demandes non payées bloquent encore les dates | WP-Cron ne tourne pas (site sans visites) | L'expiration est aussi vérifiée à chaque affichage d'un calendrier ; en production, un vrai cron qui appelle `wp-cron.php` |
+| Synchronisation : « Versions différentes » | Le plugin n'a pas la même version sur les deux sites | Mettre à jour le plugin là où il est en retard |
+| Synchronisation : « Le fichier dépasse la taille maximale » | Limite d'envoi du serveur d'arrivée | Exporter sans les photos, ou augmenter `upload_max_filesize` et `post_max_size` |
+| Synchronisation : un client importé ne peut pas se connecter | Les mots de passe ne sont pas copiés | « Mot de passe oublié » sur `/mon-espace/`, ou nouveau mot de passe dans Comptes |
 | « Ce lien de réservation n'est pas valide » | Lien tronqué (clé manquante) ou réservation supprimée | Renvoyer le lien depuis l'encadré « Suivi de la réservation » |
 | Le menu HomyStay est invisible pour un gestionnaire | Rôle créé avant l'activation | Désactiver puis réactiver le plugin |
 | Le style ne correspond pas au thème | CSS du plugin | Variables `--hs-*` (§10) ou `homystay_load_css` à `false` |
