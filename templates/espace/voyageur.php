@@ -41,7 +41,12 @@ $paies   = HS_Fields::for_type( 'hs_reservation' )['paiement']['options'];
 			<div class="es-sejour__photo"></div>
 		<?php endif; ?>
 		<div class="es-sejour__infos">
-			<p class="es-badge"><?php echo esc_html( $badge ); ?></p>
+			<?php $st = HS_Donnees::m( $suivant->ID, 'statut' ); $pa = HS_Donnees::m( $suivant->ID, 'paiement' ); ?>
+			<?php if ( 'demande' === $st ) : ?>
+				<p class="es-badge es-badge--alerte"><?php echo 'verification' === $pa ? 'Paiement en cours de vérification' : 'En attente de paiement'; ?></p>
+			<?php else : ?>
+				<p class="es-badge"><?php echo esc_html( $badge ); ?></p>
+			<?php endif; ?>
 			<h2 class="es-sejour__titre"><a href="<?php echo esc_url( get_permalink( $bien ) ); ?>"><?php echo esc_html( get_the_title( $bien ) ); ?></a></h2>
 			<p class="es-sejour__lieu"><?php echo esc_html( implode( ', ', array_filter( array( HS_Donnees::m( $bien, 'adresse' ), HS_Donnees::m( $bien, 'quartier' ), HS_Donnees::m( $bien, 'ville' ) ) ) ) ); ?></p>
 			<dl class="es-sejour__dl">
@@ -54,6 +59,11 @@ $paies   = HS_Fields::for_type( 'hs_reservation' )['paiement']['options'];
 				<p class="es-sejour__consignes"><?php echo nl2br( esc_html( HS_Donnees::m( $suivant->ID, 'consignes' ) ) ); ?></p>
 			<?php endif; ?>
 			<div class="es-boutons">
+				<?php if ( 'demande' === $st && 'attente' === $pa && get_post_meta( $suivant->ID, 'hs_cle', true ) ) : ?>
+					<a class="es-btn" href="<?php echo esc_url( HS_Reservation::url_suivi( $suivant->ID ) ); ?>">Payer <?php echo esc_html( HS_Donnees::fcfa( HS_Donnees::m( $suivant->ID, 'a_payer' ) ? HS_Donnees::m( $suivant->ID, 'a_payer' ) : HS_Donnees::m( $suivant->ID, 'montant' ) ) ); ?></a>
+				<?php elseif ( get_post_meta( $suivant->ID, 'hs_cle', true ) ) : ?>
+					<a class="es-btn es-btn--clair" href="<?php echo esc_url( HS_Reservation::url_suivi( $suivant->ID ) ); ?>">Détail de la réservation</a>
+				<?php endif; ?>
 				<?php if ( $wa ) : ?><a class="es-btn es-btn--wa" href="<?php echo esc_url( $wa ); ?>" target="_blank" rel="noopener"><?php echo esc_html( HS_Espace::libelle_contact() ); ?></a><?php endif; ?>
 				<?php if ( $lat && $lng ) : ?><a class="es-btn es-btn--clair" href="<?php echo esc_url( sprintf( 'https://www.google.com/maps/dir/?api=1&destination=%F,%F', $lat, $lng ) ); ?>" target="_blank" rel="noopener">Itinéraire</a><?php endif; ?>
 			</div>

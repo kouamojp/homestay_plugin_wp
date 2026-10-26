@@ -16,12 +16,15 @@ $tickets    = HS_Donnees::tickets_ouverts();
 $bloquants  = count( array_filter( $tickets, function ( $t ) { return (int) HS_Donnees::m( $t->ID, 'bloquant' ); } ) );
 $a_valider  = array_filter( $tickets, function ( $t ) { return 'signale' === HS_Donnees::m( $t->ID, 'etape' ); } );
 $agenda     = HS_Donnees::agenda_du_jour();
+HS_Reservation::expirer();
+$demandes   = HS_Donnees::posts( 'hs_reservation', array( array( 'key' => 'hs_statut', 'value' => 'demande' ) ), array( 'post_status' => 'any' ) );
+usort( $demandes, function ( $a, $b ) { return ( 'verification' === HS_Donnees::m( $b->ID, 'paiement' ) ) - ( 'verification' === HS_Donnees::m( $a->ID, 'paiement' ) ); } );
 $polices    = HS_Donnees::polices_a_renouveler();
 $statuts    = HS_Donnees::biens_par_statut();
 $resas      = HS_Donnees::prochaines_reservations( 6 );
 $crm        = HS_Donnees::contacts_par_etape();
 $defs_r     = HS_Fields::for_type( 'hs_reservation' );
-$puces_paie = array( 'paye' => 'ok', 'acompte' => 'alerte', 'attente' => 'danger', 'rembourse' => 'neutre' );
+$puces_paie = array( 'paye' => 'ok', 'acompte' => 'alerte', 'verification' => 'alerte', 'attente' => 'danger', 'rembourse' => 'neutre' );
 $puces_jour = array( 'depart' => array( 'Départ', 'ok' ), 'arrivee' => array( 'Arrivée', 'alerte' ), 'visite' => array( 'Rendez-vous', 'info' ) );
 ?>
 <div class="tb-actions">
@@ -82,8 +85,12 @@ $puces_jour = array( 'depart' => array( 'Départ', 'ok' ), 'arrivee' => array( '
 		<?php endif; ?>
 
 		<h3 class="tb-h3">À traiter</h3>
-		<?php if ( $impayes || $polices || $a_valider ) : ?>
+		<?php if ( $impayes || $polices || $a_valider || $demandes ) : ?>
 			<ul class="tb-taches">
+				<?php foreach ( $demandes as $d ) : ?>
+					<?php $verif = 'verification' === HS_Donnees::m( $d->ID, 'paiement' ); ?>
+					<li class="<?php echo $verif ? 'tb-tache--alerte' : ''; ?>"><span><?php echo $verif ? 'Paiement à vérifier' : 'Réservation en attente de paiement'; ?> : <?php echo esc_html( HS_Donnees::m( $d->ID, 'voyageur' ) . ', ' . get_the_title( (int) HS_Donnees::m( $d->ID, 'bien_id' ) ) . ' (' . HS_Donnees::fcfa( HS_Donnees::m( $d->ID, 'a_payer' ) ) . ')' ); ?></span><a href="<?php echo esc_url( get_edit_post_link( $d->ID ) ); ?>"><?php echo $verif ? 'Vérifier' : 'Ouvrir'; ?></a></li>
+				<?php endforeach; ?>
 				<?php foreach ( $impayes as $r ) : ?>
 					<li class="tb-tache--danger"><span>Loyer <?php echo esc_html( HS_Donnees::de_mois( $r->periode ) ); ?> impayé : <?php echo esc_html( get_the_title( (int) $r->bien_id ) ); ?></span><a href="<?php echo esc_url( HS_Tableau::url( 'finances' ) ); ?>">Relancer</a></li>
 				<?php endforeach; ?>

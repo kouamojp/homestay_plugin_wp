@@ -103,6 +103,10 @@ class HS_Single {
 				wp_add_inline_style( 'homystay-bien', '.hs-bien{--hs-font-titre:var(--e-global-typography-primary-font-family,inherit);--hs-font-texte:var(--e-global-typography-text-font-family,inherit)}' );
 			}
 		}
+		if ( HS_Reservation::actif( get_queried_object_id() ) ) {
+			wp_enqueue_style( 'homystay-reservation', HS_URL . 'assets/css/reservation.css', array( 'homystay-bien' ), HS_VERSION );
+			wp_enqueue_script( 'homystay-reservation', HS_URL . 'assets/js/reservation.js', array(), HS_VERSION, true );
+		}
 		wp_enqueue_script( 'homystay-bien', HS_URL . 'assets/js/bien.js', array(), HS_VERSION, true );
 		wp_enqueue_script( 'homystay-liste', HS_URL . 'assets/js/liste.js', array(), HS_VERSION, true ); // favoris des biens similaires
 	}
@@ -163,6 +167,8 @@ class HS_Single {
 			'telephone'   => HS_Settings::get( 'telephone' ),
 			'email'       => HS_Settings::get( 'email' ),
 			'similaires'  => self::similaires( $bien_id, $f( 'ville' ) ),
+			'resa'        => HS_Reservation::actif( $bien_id ) ? HS_Reservation::donnees_calendrier( $bien_id ) : null,
+			'capacite'    => HS_Reservation::capacite( $bien_id ),
 		);
 	}
 

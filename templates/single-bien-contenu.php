@@ -12,6 +12,8 @@
  * @var bool          $reservable
  * @var string        $whatsapp, $telephone, $email
  * @var WP_Query|null $similaires
+ * @var array|null    $resa         Réservation en ligne (calendrier, prix) ou null si le bien ne se réserve pas en ligne
+ * @var int           $capacite
  */
 defined( 'ABSPATH' ) || exit;
 
@@ -158,10 +160,82 @@ $icone = array(
 			<?php endif; ?>
 		</div>
 
-		<aside class="hs-bien__lateral" aria-label="Prix et contact">
+		<aside class="hs-bien__lateral" aria-label="<?php echo $resa ? 'Réserver' : 'Prix et contact'; ?>">
 			<div class="hs-encart">
+				<?php if ( $resa ) : ?>
+					<?php
+					// Retour d'erreur du formulaire (dates prises entre-temps, champ manquant…) : valeurs conservées.
+					$r_get = function ( $k ) {
+						return isset( $_GET[ $k ] ) ? sanitize_text_field( wp_unslash( $_GET[ $k ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+					};
+					$r_err  = $r_get( 'hs_resa_erreur' );
+					$r_pers = max( 1, min( $capacite, (int) $r_get( 'personnes' ) ? (int) $r_get( 'personnes' ) : min( 2, $capacite ) ) );
+					$r_user = wp_get_current_user();
+					?>
+					<form id="hs-reserver" class="hs-resa" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-hs-resa novalidate>
+						<p class="hs-resa__prix"><span class="hs-encart__prix"><?php echo esc_html( HS_Templates::prix( $resa['prix'] ) ); ?></span> <span class="hs-encart__unite">/ nuit</span></p>
+						<?php if ( $resa['nuitsMin'] > 1 ) : ?><p class="hs-resa__min"><?php echo esc_html( sprintf( '%d nuits minimum', $resa['nuitsMin'] ) ); ?></p><?php endif; ?>
+
+						<p class="hs-resa__erreur" role="alert" data-hs-erreur<?php echo $r_err ? '' : ' hidden'; ?>><?php echo esc_html( $r_err ); ?></p>
+
+						<fieldset class="hs-resa__dates">
+							<legend class="hs-sr">Dates du séjour</legend>
+							<label class="hs-resa__champ" data-hs-champ="arrivee">
+								<span>Arrivée</span>
+								<input type="date" name="arrivee" min="<?php echo esc_attr( $resa['aujourdhui'] ); ?>" value="<?php echo esc_attr( $r_get( 'arrivee' ) ); ?>" required>
+							</label>
+							<label class="hs-resa__champ" data-hs-champ="depart">
+								<span>Départ</span>
+								<input type="date" name="depart" min="<?php echo esc_attr( $resa['aujourdhui'] ); ?>" value="<?php echo esc_attr( $r_get( 'depart' ) ); ?>" required>
+							</label>
+						</fieldset>
+						<div class="hs-cal" data-hs-calendrier hidden></div>
+
+						<label class="hs-resa__champ hs-resa__champ--plein">
+							<span>Voyageurs</span>
+							<select name="personnes">
+								<?php for ( $i = 1; $i <= $capacite; $i++ ) : ?>
+									<option value="<?php echo (int) $i; ?>"<?php selected( $r_pers, $i ); ?>><?php echo esc_html( sprintf( _n( '%d personne', '%d personnes', $i, 'homystay-core' ), $i ) ); ?></option>
+								<?php endfor; ?>
+							</select>
+						</label>
+
+						<dl class="hs-resa__recap" data-hs-recap hidden>
+							<div><dt data-hs-l-sejour></dt><dd data-hs-v-sejour></dd></div>
+							<?php if ( $resa['menage'] ) : ?><div><dt>Frais de ménage</dt><dd><?php echo esc_html( HS_Templates::prix( $resa['menage'] ) ); ?></dd></div><?php endif; ?>
+							<div class="hs-resa__total"><dt>Total</dt><dd data-hs-v-total></dd></div>
+							<?php if ( $resa['acompte'] > 0 && $resa['acompte'] < 100 ) : ?>
+								<div class="hs-resa__acompte"><dt>À payer pour confirmer (<?php echo (int) $resa['acompte']; ?> %)</dt><dd data-hs-v-acompte></dd></div>
+							<?php endif; ?>
+						</dl>
+
+						<div class="hs-resa__coord" data-hs-coord>
+							<p class="hs-resa__etape">Vos coordonnées</p>
+							<label class="hs-resa__champ hs-resa__champ--plein"><span>Nom complet</span><input type="text" name="nom" autocomplete="name" required value="<?php echo esc_attr( $r_user->ID ? $r_user->display_name : '' ); ?>"></label>
+							<label class="hs-resa__champ hs-resa__champ--plein"><span>Téléphone (WhatsApp de préférence)</span><input type="tel" name="telephone" autocomplete="tel" inputmode="tel" required placeholder="6 90 00 00 00" value="<?php echo esc_attr( $r_user->ID ? get_user_meta( $r_user->ID, 'hs_telephone', true ) : '' ); ?>"></label>
+							<label class="hs-resa__champ hs-resa__champ--plein"><span>Email <em>(confirmation et accès à votre espace)</em></span><input type="email" name="email" autocomplete="email" value="<?php echo esc_attr( $r_user->ID ? $r_user->user_email : '' ); ?>"></label>
+							<label class="hs-resa__champ hs-resa__champ--plein"><span>Message <em>(facultatif)</em></span><textarea name="message" rows="2" placeholder="Heure d'arrivée prévue, besoin particulier…"></textarea></label>
+							<label class="hs-resa__piege" aria-hidden="true">Site web <input type="text" name="site_web" tabindex="-1" autocomplete="off"></label>
+						</div>
+
+						<input type="hidden" name="action" value="hs_reserver">
+						<input type="hidden" name="bien" value="<?php echo (int) $bien_id; ?>">
+						<input type="hidden" name="_hs_nonce" value="<?php echo esc_attr( wp_create_nonce( 'hs_reserver_' . $bien_id ) ); ?>">
+						<button type="submit" class="hs-btn hs-btn--plein" data-hs-bouton>Réserver</button>
+						<p class="hs-resa__note">
+							<?php
+							$moyens_txt = implode( ' ou ', wp_list_pluck( HS_Reservation::moyens(), 'nom' ) );
+							echo esc_html( $moyens_txt ? 'Paiement par ' . $moyens_txt . ' à l\'étape suivante.' : 'Nous vous contactons pour le paiement.' );
+							?>
+							<?php if ( $resa['acompte'] > 0 && $resa['acompte'] < 100 ) : ?> <?php echo esc_html( sprintf( 'Acompte de %d %% pour confirmer, solde à l\'arrivée.', $resa['acompte'] ) ); ?><?php endif; ?>
+						</p>
+						<script type="application/json" data-hs-resa-donnees><?php echo wp_json_encode( $resa, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG ); ?></script>
+					</form>
+					<?php unset( $offres['courte'] ); ?>
+				<?php endif; ?>
+
 				<?php if ( $offres ) : ?>
-					<dl class="hs-encart__offres">
+					<dl class="hs-encart__offres<?php echo $resa ? ' hs-encart__offres--autres' : ''; ?>">
 						<?php foreach ( $offres as $o ) : ?>
 							<div>
 								<dt><?php echo esc_html( $o['label'] ); ?></dt>
@@ -169,7 +243,7 @@ $icone = array(
 							</div>
 						<?php endforeach; ?>
 					</dl>
-				<?php else : ?>
+				<?php elseif ( ! $resa ) : ?>
 					<p class="hs-encart__prix hs-encart__prix--seul">Prix sur demande</p>
 				<?php endif; ?>
 
@@ -177,7 +251,8 @@ $icone = array(
 					<p class="hs-encart__alerte">Ce bien n'est pas libre en ce moment. Écrivez-nous : nous vous proposerons un logement proche.</p>
 				<?php endif; ?>
 
-				<div class="hs-encart__actions">
+				<?php if ( $resa ) : ?><p class="hs-encart__question">Une question avant de réserver ?</p><?php endif; ?>
+				<div class="hs-encart__actions<?php echo $resa ? ' hs-encart__actions--discret' : ''; ?>">
 					<?php if ( $whatsapp ) : ?>
 						<a class="hs-btn hs-btn--whatsapp" href="<?php echo esc_url( $whatsapp ); ?>" target="_blank" rel="noopener">
 							<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" stroke="none" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.7a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>
@@ -191,7 +266,7 @@ $icone = array(
 						<a class="hs-encart__email" href="<?php echo esc_url( 'mailto:' . $email . '?subject=' . $sujet_mail ); ?>">Poser une question par email</a>
 					<?php endif; ?>
 				</div>
-				<?php if ( $reference ) : ?>
+				<?php if ( $reference && ! $resa ) : ?>
 					<p class="hs-encart__note">Indiquez la référence <strong><?php echo esc_html( $reference ); ?></strong> : nous retrouvons le logement tout de suite.</p>
 				<?php endif; ?>
 			</div>

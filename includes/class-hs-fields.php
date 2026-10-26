@@ -43,6 +43,8 @@ class HS_Fields {
 				'offre_longue'    => array( 'label' => 'Location longue durée', 'type' => 'checkbox' ),
 				'offre_vente'     => array( 'label' => 'Vente', 'type' => 'checkbox' ),
 				'prix_courte'     => array( 'label' => 'Prix par nuit (FCFA)', 'type' => 'number' ),
+				'nuits_min'       => array( 'label' => 'Nuits minimum', 'type' => 'number', 'help' => 'Séjour le plus court réservable en ligne (1 si vide).' ),
+				'frais_menage'    => array( 'label' => 'Frais de ménage (FCFA)', 'type' => 'number', 'help' => 'Ajoutés une fois par séjour.' ),
 				'prix_longue'     => array( 'label' => 'Loyer mensuel (FCFA)', 'type' => 'number' ),
 				'prix_vente'      => array( 'label' => 'Prix de vente (FCFA)', 'type' => 'number' ),
 				'proprietaire_id' => array( 'label' => 'Propriétaire', 'type' => 'post', 'post_type' => 'hs_proprietaire' ),
@@ -135,12 +137,20 @@ class HS_Fields {
 				'depart'    => array( 'label' => 'Départ', 'type' => 'date' ),
 				'personnes' => array( 'label' => 'Voyageurs', 'type' => 'number' ),
 				'montant'   => array( 'label' => 'Montant total (FCFA)', 'type' => 'number' ),
+				'a_payer'   => array( 'label' => 'À payer pour confirmer (FCFA)', 'type' => 'number', 'help' => 'Acompte demandé à la réservation en ligne.' ),
 				'paiement'  => array( 'label' => 'Paiement', 'type' => 'select', 'options' => array(
-					'attente' => 'En attente', 'acompte' => 'Acompte', 'paye' => 'Payé', 'rembourse' => 'Remboursé',
+					'attente' => 'En attente', 'verification' => 'À vérifier', 'acompte' => 'Acompte', 'paye' => 'Payé', 'rembourse' => 'Remboursé',
 				), 'default' => 'attente' ),
+				'operateur' => array( 'label' => 'Payé par', 'type' => 'select', 'options' => array(
+					'orange' => 'Orange Money', 'mtn' => 'MTN MoMo', 'especes' => 'Espèces', 'virement' => 'Virement',
+				), 'default' => '' ),
+				'numero_paiement' => array( 'label' => 'Numéro qui a payé', 'type' => 'tel' ),
+				'transaction'     => array( 'label' => 'ID de transaction', 'type' => 'text', 'help' => 'Saisi par le voyageur : vérifiez-le dans votre compte Orange Money ou MTN MoMo avant de confirmer.' ),
+				'montant_paye'    => array( 'label' => 'Montant reçu (FCFA)', 'type' => 'number' ),
 				'statut'    => array( 'label' => 'Statut', 'type' => 'select', 'options' => array(
-					'demande' => 'Demande', 'confirmee' => 'Confirmée', 'terminee' => 'Terminée', 'annulee' => 'Annulée',
-				), 'default' => 'demande' ),
+					'demande' => 'Demande', 'confirmee' => 'Confirmée', 'terminee' => 'Terminée', 'annulee' => 'Annulée', 'expiree' => 'Expirée',
+				), 'default' => 'demande', 'help' => 'Passer à « Confirmée » crée le compte du voyageur et lui envoie la confirmation.' ),
+				'message'   => array( 'label' => 'Message du voyageur', 'type' => 'textarea' ),
 				'source'    => array( 'label' => 'Source', 'type' => 'select', 'options' => array(
 					'site' => 'Site', 'whatsapp' => 'WhatsApp', 'telephone' => 'Téléphone', 'airbnb' => 'Airbnb', 'booking' => 'Booking', 'autre' => 'Autre',
 				), 'default' => 'site' ),

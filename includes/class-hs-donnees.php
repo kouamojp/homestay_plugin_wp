@@ -77,7 +77,7 @@ class HS_Donnees {
 	/* ---------- Réservations et occupation ---------- */
 
 	public static function reservations_actives( array $meta = array(), array $extra = array() ) {
-		$meta[] = array( 'key' => 'hs_statut', 'value' => 'annulee', 'compare' => '!=' );
+		$meta[] = array( 'key' => 'hs_statut', 'value' => array( 'annulee', 'expiree' ), 'compare' => 'NOT IN' );
 		return self::posts( 'hs_reservation', $meta, $extra );
 	}
 
