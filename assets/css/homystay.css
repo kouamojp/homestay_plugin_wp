@@ -1,0 +1,117 @@
+/*
+ * HomyStay Core : styles de base, volontairement neutres.
+ * Tout est réglable via les variables ci-dessous (Elementor › Code personnalisé, ou CSS du thème).
+ * Pour tout désactiver : add_filter( 'homystay_load_css', '__return_false' );
+ */
+:root {
+	--hs-accent: #0f6e5c;
+	--hs-texte: inherit;
+	--hs-texte-doux: #6b7280;
+	--hs-fond-carte: #fff;
+	--hs-bordure: #e5e7eb;
+	--hs-rayon: 6px;
+	--hs-espace: 24px;
+}
+
+.hs-grille { display: grid; gap: var(--hs-espace); grid-template-columns: repeat(var(--hs-cols, 3), minmax(0, 1fr)); }
+.hs-grille--1 { --hs-cols: 1; } .hs-grille--2 { --hs-cols: 2; } .hs-grille--3 { --hs-cols: 3; } .hs-grille--4 { --hs-cols: 4; }
+@media (max-width: 1024px) { .hs-grille--3, .hs-grille--4 { --hs-cols: 2; } }
+@media (max-width: 640px)  { .hs-grille { --hs-cols: 1; } }
+
+.hs-carte { background: var(--hs-fond-carte); border-radius: var(--hs-rayon); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 16px rgba(16,24,40,.06); transition: box-shadow .2s, transform .2s; }
+.hs-carte:hover { box-shadow: 0 2px 4px rgba(16,24,40,.08), 0 12px 28px rgba(16,24,40,.12); }
+.hs-carte__media { position: relative; display: block; aspect-ratio: 4 / 3; background: #f3f4f6; }
+.hs-carte__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hs-carte__placeholder { position: absolute; inset: 0; }
+.hs-carte__corps { padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+.hs-carte__lieu { margin: 0; font-size: .85em; color: var(--hs-texte-doux); }
+.hs-carte__titre { margin: 0; font-size: 1.1em; line-height: 1.3; }
+.hs-carte__titre a { color: inherit; text-decoration: none; }
+.hs-carte__infos { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .9em; color: var(--hs-texte-doux); }
+.hs-carte__prix { margin: 4px 0 0; font-weight: 700; color: var(--hs-accent); }
+.hs-badge { position: absolute; top: 12px; left: 12px; background: #111827; color: #fff; font-size: .75em; padding: 4px 8px; border-radius: 999px; }
+
+.hs-recherche { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.hs-recherche__champ { display: flex; flex-direction: column; gap: 4px; flex: 1 1 160px; font-size: .9em; }
+.hs-recherche select, .hs-recherche input { width: 100%; padding: 10px; border: 1px solid var(--hs-bordure); border-radius: 6px; font: inherit; }
+
+.hs-bouton { background: var(--hs-accent); color: #fff; border: 0; border-radius: 6px; padding: 11px 20px; font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+.hs-bouton--secondaire { background: transparent; color: var(--hs-accent); border: 1px solid var(--hs-accent); }
+
+.hs-fiche { display: flex; flex-direction: column; gap: var(--hs-espace); }
+.hs-fiche__statut { align-self: flex-start; font-size: .8em; padding: 4px 10px; border-radius: 999px; background: #f3f4f6; }
+.hs-statut--disponible { background: #dcfce7; color: #166534; }
+.hs-statut--reserve, .hs-statut--occupe { background: #fef3c7; color: #92400e; }
+.hs-fiche__offres { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 12px; }
+.hs-fiche__offres li { border: 1px solid var(--hs-bordure); border-radius: var(--hs-rayon); padding: 12px 16px; display: flex; flex-direction: column; }
+.hs-fiche__offres strong { color: var(--hs-accent); font-size: 1.15em; }
+.hs-fiche__caracs { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin: 0; }
+.hs-fiche__caracs dt { font-size: .8em; color: var(--hs-texte-doux); }
+.hs-fiche__caracs dd { margin: 0; font-weight: 600; }
+.hs-fiche__carte iframe { width: 100%; height: 320px; border: 0; border-radius: var(--hs-rayon); }
+.hs-fiche__video iframe { width: 100%; aspect-ratio: 16 / 9; height: auto; }
+
+.hs-progression { height: 6px; background: #f3f4f6; border-radius: 999px; overflow: hidden; margin-top: 6px; }
+.hs-progression span { display: block; height: 100%; background: var(--hs-accent); }
+.hs-projet__levee { margin: 0; font-size: .85em; color: var(--hs-texte-doux); }
+
+.hs-pagination { margin-top: calc(var(--hs-espace) + 8px); display: flex; gap: 6px; flex-wrap: wrap; }
+.hs-pagination .page-numbers { min-width: 34px; height: 34px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; text-decoration: none; color: var(--hs-texte-doux); font-size: .9em; }
+.hs-pagination a.page-numbers:hover { background: #f3f4f6; color: inherit; }
+.hs-pagination .current { background: var(--hs-accent); color: #fff; }
+.hs-pagination .dots { min-width: 20px; }
+.hs-vide { color: var(--hs-texte-doux); }
+
+/* Page d'un bien : voir assets/css/bien.css (chargé uniquement sur cette page). */
+
+/* ---------- Carte d'un bien (style annonce) ---------- */
+.hs-annonce__media { position: relative; aspect-ratio: 32 / 25; background: #e5e7eb; overflow: hidden; }
+.hs-annonce__media > a { position: absolute; inset: 0; display: block; }
+.hs-annonce__media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
+.hs-annonce:hover .hs-annonce__media img { transform: scale(1.04); }
+/* Dégradé sombre en bas de l'image pour la lisibilité du prix */
+.hs-annonce__media::after { content: ""; position: absolute; inset: auto 0 0 0; height: 45%; background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,0)); pointer-events: none; }
+.hs-annonce__prix { position: absolute; left: 14px; bottom: 12px; z-index: 1; margin: 0; color: #fff; font-size: 1.3em; font-weight: 700; line-height: 1; text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.hs-annonce__prix span { font-size: .62em; font-weight: 500; margin-left: 2px; }
+.hs-annonce__badge { position: absolute; top: 12px; right: 12px; z-index: 1; background: var(--hs-accent); color: #fff; font-size: .75em; font-weight: 600; line-height: 1; padding: 6px 10px; border-radius: 4px; }
+.hs-annonce__badge--reserve { background: #111827; }
+
+.hs-annonce__corps { position: relative; padding: 14px 64px 16px 16px; display: flex; flex-direction: column; gap: 6px; }
+.hs-annonce__titre { margin: 0 0 2px; font-size: 1.15em; font-weight: 600; line-height: 1.3; }
+.hs-annonce__titre a { color: inherit; text-decoration: none; }
+.hs-annonce__titre a:hover { color: var(--hs-accent); }
+/* Lien étendu : toute la carte est cliquable, sauf les liens et boutons internes */
+.hs-annonce__titre a::before { content: ""; position: absolute; inset: 0; z-index: 0; }
+.hs-annonce__ligne { position: relative; z-index: 1; margin: 0; display: flex; align-items: center; gap: 7px; font-size: .85em; color: var(--hs-texte-doux); pointer-events: none; }
+.hs-annonce__ligne a { color: inherit; text-decoration: none; pointer-events: auto; }
+.hs-annonce__ligne a:hover { color: var(--hs-accent); text-decoration: underline; }
+.hs-annonce__ligne svg { flex: none; opacity: .8; }
+
+.hs-annonce__favori { position: absolute; right: 16px; bottom: 16px; z-index: 2; width: 36px; height: 36px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; display: grid; place-items: center; background: #fde8e8; color: #f1a1a1; transition: background .2s, color .2s, transform .2s; }
+.hs-annonce__favori:hover { color: #e11d48; transform: scale(1.08); }
+.hs-annonce__favori.est-favori { background: #e11d48; color: #fff; }
+
+/* ---------- Barre de filtres et de tri ---------- */
+.hs-barre { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: var(--hs-espace); }
+.hs-barre__filtres { display: flex; flex-wrap: wrap; gap: 8px; flex: 1 1 auto; }
+.hs-barre__tri { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.hs-barre__total { font-size: .85em; color: var(--hs-texte-doux); white-space: nowrap; }
+.hs-barre__select { position: relative; }
+.hs-barre__select select { appearance: none; -webkit-appearance: none; min-width: 160px; height: 42px; padding: 0 36px 0 14px; border: 1px solid var(--hs-bordure); border-radius: 4px; background: #fff; color: inherit; font: inherit; font-size: .9em; cursor: pointer; }
+.hs-barre__select select:focus { outline: 2px solid var(--hs-accent); outline-offset: 1px; }
+.hs-barre__select::after { content: ""; position: absolute; right: 15px; top: 50%; width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-70%) rotate(45deg); pointer-events: none; opacity: .6; }
+/* Ordinateur : filtres et tri sur une seule ligne */
+@media (min-width: 1025px) {
+	.hs-barre { flex-wrap: nowrap; }
+	.hs-barre__filtres { flex-wrap: nowrap; min-width: 0; }
+	.hs-barre__filtres .hs-barre__select { flex: 1 1 0; min-width: 0; max-width: 200px; }
+	.hs-barre__filtres select { width: 100%; min-width: 0; }
+	.hs-barre__tri select { width: 200px; min-width: 0; }
+}
+@media (max-width: 640px) {
+	.hs-barre__filtres, .hs-barre__tri { width: 100%; }
+	.hs-barre__select { flex: 1 1 calc(50% - 4px); }
+	.hs-barre__select select { width: 100%; min-width: 0; }
+	.hs-barre__tri { justify-content: space-between; }
+	.hs-barre__tri .hs-barre__select { flex: 0 1 auto; }
+}
